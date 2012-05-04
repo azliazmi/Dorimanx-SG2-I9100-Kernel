@@ -115,7 +115,6 @@ static __always_inline int read_seqretry(const seqlock_t *sl, unsigned start)
  * updating starting before the write_seqcountbeqin() and ending
  * after the write_seqcount_end().
  */
-
 typedef struct seqcount {
 	unsigned sequence;
 } seqcount_t;
@@ -166,6 +165,27 @@ static inline unsigned read_seqcount_begin(const seqcount_t *s)
 }
 
 /**
+ * raw_seqcount_begin - begin a seq-read critical section
+ * @s: pointer to seqcount_t
+ * Returns: count to be passed to read_seqcount_retry
+ *
+ * raw_seqcount_begin opens a read critical section of the given seqcount.
+ * Validity of the critical section is tested by checking read_seqcount_retry
+ * function.
+ *
+ * Unlike read_seqcount_begin(), this function will not wait for the count
+ * to stabilize. If a writer is active when we begin, we will fail the
+ * read_seqcount_retry() instead of stabilizing at the beginning of the
+ * critical section.
+ */
+static inline unsigned raw_seqcount_begin(const seqcount_t *s)
+{
+	unsigned ret = ACCESS_ONCE(s->sequence);
+	smp_rmb();
+	return ret & ~1;
+}
+
+/**
  * __read_seqcount_retry - end a seq-read critical section (without barrier)
  * @s: pointer to seqcount_t
  * @start: count, from read_seqcount_begin
@@ -197,7 +217,6 @@ static inline int __read_seqcount_retry(const seqcount_t *s, unsigned start)
 static inline int read_seqcount_retry(const seqcount_t *s, unsigned start)
 {
 	smp_rmb();
-
 	return __read_seqcount_retry(s, start);
 }
 
