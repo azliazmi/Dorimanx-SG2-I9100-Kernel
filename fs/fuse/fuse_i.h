@@ -85,7 +85,7 @@ struct fuse_inode {
 
 	/** The sticky bit in inode->i_mode may have been removed, so
 	    preserve the original mode */
-	mode_t orig_i_mode;
+	umode_t orig_i_mode;
 
 	/** 64 bit inode number */
 	u64 orig_ino;
@@ -603,7 +603,8 @@ void fuse_release_common(struct file *file, int opcode);
 /**
  * Send FSYNC or FSYNCDIR request
  */
-int fuse_fsync_common(struct file *file, int datasync, int isdir);
+int fuse_fsync_common(struct file *file, loff_t start, loff_t end,
+		      int datasync, int isdir);
 
 /**
  * Notify poll wakeup

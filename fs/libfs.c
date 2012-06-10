@@ -264,6 +264,13 @@ Enomem:
 	return ERR_PTR(-ENOMEM);
 }
 
+int simple_open(struct inode *inode, struct file *file)
+{
+	if (inode->i_private)
+		file->private_data = inode->i_private;
+	return 0;
+}
+
 int simple_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry)
 {
 	struct inode *inode = old_dentry->d_inode;
@@ -508,8 +515,10 @@ int simple_fill_super(struct super_block *s, unsigned long magic,
 		if (!dentry)
 			goto out;
 		inode = new_inode(s);
-		if (!inode)
+		if (!inode) {
+			dput(dentry);
 			goto out;
+		}
 		inode->i_mode = S_IFREG | files->mode;
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 		inode->i_fop = files->ops;
@@ -520,6 +529,7 @@ int simple_fill_super(struct super_block *s, unsigned long magic,
 	return 0;
 out:
 	d_genocide(root);
+	shrink_dcache_parent(root);
 	dput(root);
 	return -ENOMEM;
 }
@@ -864,7 +874,7 @@ struct dentry *generic_fh_to_dentry(struct super_block *sb, struct fid *fid,
 EXPORT_SYMBOL_GPL(generic_fh_to_dentry);
 
 /**
- * generic_fh_to_dentry - generic helper for the fh_to_parent export operation
+ * generic_fh_to_parent - generic helper for the fh_to_parent export operation
  * @sb:		filesystem to do the file handle conversion on
  * @fid:	file handle to convert
  * @fh_len:	length of the file handle in bytes
@@ -956,7 +966,7 @@ EXPORT_SYMBOL(generic_check_addressable);
 /*
  * No-op implementation of ->fsync for in-memory filesystems.
  */
-int noop_fsync(struct file *file, int datasync)
+int noop_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 {
 	return 0;
 }
@@ -974,6 +984,7 @@ EXPORT_SYMBOL(simple_dir_operations);
 EXPORT_SYMBOL(simple_empty);
 EXPORT_SYMBOL(simple_fill_super);
 EXPORT_SYMBOL(simple_getattr);
+EXPORT_SYMBOL(simple_open);
 EXPORT_SYMBOL(simple_link);
 EXPORT_SYMBOL(simple_lookup);
 EXPORT_SYMBOL(simple_pin_fs);

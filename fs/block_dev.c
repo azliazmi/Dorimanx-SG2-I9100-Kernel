@@ -349,7 +349,7 @@ static loff_t block_llseek(struct file *file, loff_t offset, int whence)
 	return retval;
 }
 	
-int blkdev_fsync(struct file *filp, int datasync)
+int blkdev_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
 {
 	struct inode *bd_inode = filp->f_mapping->host;
 	struct block_device *bdev = I_BDEV(bd_inode);

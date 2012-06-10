@@ -235,7 +235,7 @@ extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
 			   struct page *, struct inode *);
 
 /* file.c */
-extern int nilfs_sync_file(struct file *, int);
+extern int nilfs_sync_file(struct file *, loff_t, loff_t, int);
 
 /* ioctl.c */
 long nilfs_ioctl(struct file *, unsigned int, unsigned long);
@@ -246,7 +246,7 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *, struct nilfs_argv *,
 /* inode.c */
 void nilfs_inode_add_blocks(struct inode *inode, int n);
 void nilfs_inode_sub_blocks(struct inode *inode, int n);
-extern struct inode *nilfs_new_inode(struct inode *, int);
+extern struct inode *nilfs_new_inode(struct inode *, umode_t);
 extern void nilfs_free_inode(struct inode *);
 extern int nilfs_get_block(struct inode *, sector_t, struct buffer_head *, int);
 extern void nilfs_set_inode_flags(struct inode *);
