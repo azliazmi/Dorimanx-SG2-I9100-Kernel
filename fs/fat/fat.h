@@ -27,26 +27,26 @@ struct fat_mount_options {
 	gid_t fs_gid;
 	unsigned short fs_fmask;
 	unsigned short fs_dmask;
-	unsigned short codepage;  /* Codepage for shortname conversions */
-	char *iocharset;          /* Charset used for filename input/display */
-	unsigned short shortname; /* flags for shortname display/create rule */
-	unsigned char name_check; /* r = relaxed, n = normal, s = strict */
-	unsigned char errors;	  /* On error: continue, panic, remount-ro */
+	unsigned short codepage;   /* Codepage for shortname conversions */
+	char *iocharset;           /* Charset used for filename input/display */
+	unsigned short shortname;  /* flags for shortname display/create rule */
+	unsigned char name_check;  /* r = relaxed, n = normal, s = strict */
+	unsigned char errors;	   /* On error: continue, panic, remount-ro */
 	unsigned short allow_utime;/* permission for setting the [am]time */
-	unsigned quiet:1,         /* set = fake successful chmods and chowns */
-		 showexec:1,      /* set = only set x bit for com/exe/bat */
-		 sys_immutable:1, /* set = system files are immutable */
-		 dotsOK:1,        /* set = hidden and system files are named '.filename' */
-		 isvfat:1,        /* 0=no vfat long filename support, 1=vfat support */
-		 utf8:1,	  /* Use of UTF-8 character set (Default) */
-		 unicode_xlate:1, /* create escape sequences for unhandled Unicode */
-		 numtail:1,       /* Does first alias have a numeric '~1' type tail? */
-		 flush:1,	  /* write things quickly */
-		 nocase:1,	  /* Does this need case conversion? 0=need case conversion*/
-		 usefree:1,	  /* Use free_clusters for FAT32 */
+	unsigned quiet:1,          /* set = fake successful chmods and chowns */
+		 showexec:1,       /* set = only set x bit for com/exe/bat */
+		 sys_immutable:1,  /* set = system files are immutable */
+		 dotsOK:1,         /* set = hidden and system files are named '.filename' */
+		 isvfat:1,         /* 0=no vfat long filename support, 1=vfat support */
+		 utf8:1,	   /* Use of UTF-8 character set (Default) */
+		 unicode_xlate:1,  /* create escape sequences for unhandled Unicode */
+		 numtail:1,        /* Does first alias have a numeric '~1' type tail? */
+		 flush:1,	   /* write things quickly */
+		 nocase:1,	   /* Does this need case conversion? 0=need case conversion*/
+		 usefree:1,	   /* Use free_clusters for FAT32 */
 		 tz_utc:1,	  /* Filesystem timestamps are in UTC */
-		 rodir:1,	  /* allow ATTR_RO for directory */
-		 discard:1;	  /* Issue discard requests on deletions */
+		 rodir:1,	   /* allow ATTR_RO for directory */
+		 discard:1;	   /* Issue discard requests on deletions */
 };
 
 #define FAT_HASH_BITS	8
@@ -56,29 +56,29 @@ struct fat_mount_options {
  * MS-DOS file system in-core superblock data
  */
 struct msdos_sb_info {
-	unsigned short sec_per_clus; /* sectors/cluster */
-	unsigned short cluster_bits; /* log2(cluster_size) */
-	unsigned int cluster_size;   /* cluster size */
-	unsigned char fats,fat_bits; /* number of FATs, FAT bits (12 or 16) */
+	unsigned short sec_per_clus;  /* sectors/cluster */
+	unsigned short cluster_bits;  /* log2(cluster_size) */
+	unsigned int cluster_size;    /* cluster size */
+	unsigned char fats, fat_bits; /* number of FATs, FAT bits (12 or 16) */
 	unsigned short fat_start;
-	unsigned long fat_length;    /* FAT start & length (sec.) */
+	unsigned long fat_length;     /* FAT start & length (sec.) */
 	unsigned long dir_start;
-	unsigned short dir_entries;  /* root dir start & entries */
-	unsigned long data_start;    /* first data sector */
-	unsigned long max_cluster;   /* maximum cluster number */
-	unsigned long root_cluster;  /* first cluster of the root directory */
-	unsigned long fsinfo_sector; /* sector number of FAT32 fsinfo */
+	unsigned short dir_entries;   /* root dir start & entries */
+	unsigned long data_start;     /* first data sector */
+	unsigned long max_cluster;    /* maximum cluster number */
+	unsigned long root_cluster;   /* first cluster of the root directory */
+	unsigned long fsinfo_sector;  /* sector number of FAT32 fsinfo */
 	struct mutex fat_lock;
 	unsigned int prev_free;      /* previously allocated cluster number */
 	unsigned int free_clusters;  /* -1 if undefined */
 	unsigned int free_clus_valid; /* is free_clusters valid? */
 	struct fat_mount_options options;
-	struct nls_table *nls_disk;  /* Codepage used on disk */
-	struct nls_table *nls_io;    /* Charset used for input and display */
-	const void *dir_ops;		     /* Opaque; default directory operations */
-	int dir_per_block;	     /* dir entries per block */
-	int dir_per_block_bits;	     /* log2(dir_per_block) */
-	unsigned long vol_id;        /* volume ID */
+	struct nls_table *nls_disk;   /* Codepage used on disk */
+	struct nls_table *nls_io;     /* Charset used for input and display */
+	const void *dir_ops;	      /* Opaque; default directory operations */
+	int dir_per_block;	      /* dir entries per block */
+	int dir_per_block_bits;	      /* log2(dir_per_block) */
+	unsigned long vol_id;         /* volume ID */
 
 	int fatent_shift;
 	struct fatent_operations *fatent_ops;
@@ -142,7 +142,7 @@ static inline struct msdos_inode_info *MSDOS_I(struct inode *inode)
 static inline int fat_mode_can_hold_ro(struct inode *inode)
 {
 	struct msdos_sb_info *sbi = MSDOS_SB(inode->i_sb);
-	mode_t mask;
+	umode_t mask;
 
 	if (S_ISDIR(inode->i_mode)) {
 		if (!sbi->options.rodir)
@@ -157,8 +157,8 @@ static inline int fat_mode_can_hold_ro(struct inode *inode)
 }
 
 /* Convert attribute bits and a mask to the UNIX mode. */
-static inline mode_t fat_make_mode(struct msdos_sb_info *sbi,
-				   u8 attrs, mode_t mode)
+static inline umode_t fat_make_mode(struct msdos_sb_info *sbi,
+				   u8 attrs, umode_t mode)
 {
 	if (attrs & ATTR_RO && !((attrs & ATTR_DIR) && !sbi->options.rodir))
 		mode &= ~S_IWUGO;
@@ -307,11 +307,12 @@ extern long fat_generic_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg);
 extern const struct file_operations fat_file_operations;
 extern const struct inode_operations fat_file_inode_operations;
-extern int fat_setattr(struct dentry * dentry, struct iattr * attr);
+extern int fat_setattr(struct dentry *dentry, struct iattr *attr);
 extern void fat_truncate_blocks(struct inode *inode, loff_t offset);
 extern int fat_getattr(struct vfsmount *mnt, struct dentry *dentry,
 		       struct kstat *stat);
-extern int fat_file_fsync(struct file *file, int datasync);
+extern int fat_file_fsync(struct file *file, loff_t start, loff_t end,
+			  int datasync);
 
 /* fat/inode.c */
 extern void fat_attach(struct inode *inode, loff_t i_pos);
@@ -324,7 +325,7 @@ extern int fat_fill_super(struct super_block *sb, void *data, int silent,
 			  int isvfat, void (*setup)(struct super_block *));
 
 extern int fat_flush_inodes(struct super_block *sb, struct inode *i1,
-		            struct inode *i2);
+			    struct inode *i2);
 /* fat/misc.c */
 extern __printf(3, 4) __cold
 void __fat_fs_error(struct super_block *sb, int report, const char *fmt, ...);

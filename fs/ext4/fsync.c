@@ -170,12 +170,12 @@ static int ext4_sync_parent(struct inode *inode)
  * i_mutex lock is held when entering and exiting this function
  */
 
-int ext4_sync_file(struct file *file, int datasync)
+int ext4_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 {
 	struct inode *inode = file->f_mapping->host;
 	struct ext4_inode_info *ei = EXT4_I(inode);
 	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
-	int ret;
+	int ret, err;
 	tid_t commit_tid;
 	bool needs_barrier = false;
 
@@ -183,8 +183,13 @@ int ext4_sync_file(struct file *file, int datasync)
 
 	trace_ext4_sync_file_enter(file, datasync);
 
+	ret = filemap_write_and_wait_range(inode->i_mapping, start, end);
+	if (ret)
+		return ret;
+	mutex_lock(&inode->i_mutex);
+
 	if (inode->i_sb->s_flags & MS_RDONLY)
-		return 0;
+		goto out;
 
 	ret = ext4_flush_completed_IO(inode);
 	if (ret < 0)
@@ -225,6 +230,7 @@ int ext4_sync_file(struct file *file, int datasync)
 	if (needs_barrier)
 		blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL, NULL);
  out:
+	mutex_unlock(&inode->i_mutex);
 	trace_ext4_sync_file_exit(inode, ret);
 	return ret;
 }

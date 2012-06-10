@@ -14,7 +14,6 @@
 #include <linux/pagemap.h>
 #include <linux/mpage.h>
 #include <linux/sched.h>
-#include <linux/aio.h>
 
 #include "hfs_fs.h"
 #include "btree.h"
@@ -121,7 +120,7 @@ static ssize_t hfs_direct_IO(int rw, struct kiocb *iocb,
 		const struct iovec *iov, loff_t offset, unsigned long nr_segs)
 {
 	struct file *file = iocb->ki_filp;
-	struct inode *inode = file_inode(file)->i_mapping->host;
+	struct inode *inode = file->f_path.dentry->d_inode->i_mapping->host;
 	ssize_t ret;
 
 	ret = blockdev_direct_IO(rw, iocb, inode, iov, offset, nr_segs,
@@ -170,7 +169,7 @@ const struct address_space_operations hfs_aops = {
 /*
  * hfs_new_inode
  */
-struct inode *hfs_new_inode(struct inode *dir, struct qstr *name, int mode)
+struct inode *hfs_new_inode(struct inode *dir, struct qstr *name, umode_t mode)
 {
 	struct super_block *sb = dir->i_sb;
 	struct inode *inode = new_inode(sb);
@@ -616,6 +615,8 @@ int hfs_inode_setattr(struct dentry *dentry, struct iattr * attr)
 
 	if ((attr->ia_valid & ATTR_SIZE) &&
 	    attr->ia_size != i_size_read(inode)) {
+		inode_dio_wait(inode);
+
 		error = vmtruncate(inode, attr->ia_size);
 		if (error)
 			return error;
@@ -626,11 +627,17 @@ int hfs_inode_setattr(struct dentry *dentry, struct iattr * attr)
 	return 0;
 }
 
-static int hfs_file_fsync(struct file *filp, int datasync)
+static int hfs_file_fsync(struct file *filp, loff_t start, loff_t end,
+			  int datasync)
 {
 	struct inode *inode = filp->f_mapping->host;
 	struct super_block * sb;
 	int ret, err;
+
+	ret = filemap_write_and_wait_range(inode->i_mapping, start, end);
+	if (ret)
+		return ret;
+	mutex_lock(&inode->i_mutex);
 
 	/* sync the inode to buffers */
 	ret = write_inode_now(inode, 0);
@@ -644,11 +651,11 @@ static int hfs_file_fsync(struct file *filp, int datasync)
 			hfs_mdb_commit(sb);
 		unlock_super(sb);
 	}
-	flush_delayed_work(&HFS_SB(sb)->mdb_work);
 	/* .. finally sync the buffers to disk */
 	err = sync_blockdev(sb->s_bdev);
 	if (!ret)
 		ret = err;
+	mutex_unlock(&inode->i_mutex);
 	return ret;
 }
 
