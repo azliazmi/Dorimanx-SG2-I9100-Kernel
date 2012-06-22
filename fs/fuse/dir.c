@@ -462,6 +462,7 @@ static int fuse_create_open(struct inode *dir, struct dentry *entry, int mode,
 	fuse_invalidate_attr(dir);
 	file = lookup_instantiate_filp(nd, entry, generic_file_open);
 	if (IS_ERR(file)) {
+		err = PTR_ERR(file);
 		fuse_sync_release(ff, flags);
 		return PTR_ERR(file);
 	}
