@@ -212,7 +212,7 @@ static void acct_file_reopen(struct bsd_acct_struct *acct, struct file *file,
 	}
 }
 
-static int acct_on(char *name)
+static int acct_on(struct filename *pathname)
 {
 	struct file *file;
 	struct vfsmount *mnt;
@@ -282,7 +282,7 @@ SYSCALL_DEFINE1(acct, const char __user *, name)
 		struct filename *tmp = getname(name);
 		if (IS_ERR(tmp))
 			return (PTR_ERR(tmp));
-		error = acct_on(tmp->name);
+		error = acct_on(tmp);
 		putname(tmp);
 	} else {
 		struct bsd_acct_struct *acct;
