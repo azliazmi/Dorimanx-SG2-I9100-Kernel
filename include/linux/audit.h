@@ -510,10 +510,10 @@ static inline void audit_inode(const char *name, const struct dentry *dentry,
 	if (unlikely(!audit_dummy_context()))
 		__audit_inode(name, dentry, parent);
 }
-static inline void audit_inode_child(const struct dentry *dentry,
-				     const struct inode *parent) {
+static inline void audit_inode_child(const struct inode *parent,
+				     const struct dentry *dentry) {
 	if (unlikely(!audit_dummy_context()))
-		__audit_inode_child(dentry, parent);
+		__audit_inode_child(parent, dentry);
 }
 void audit_core_dumps(long signr);
 
