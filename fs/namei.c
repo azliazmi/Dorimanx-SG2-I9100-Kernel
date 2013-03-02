@@ -396,7 +396,7 @@ int inode_permission(struct inode *inode, int mask)
  *
  * Given a path increment the reference count to the dentry and the vfsmount.
  */
-void path_get(struct path *path)
+void path_get(const struct path *path)
 {
 	mntget(path->mnt);
 	dget(path->dentry);
@@ -409,7 +409,7 @@ EXPORT_SYMBOL(path_get);
  *
  * Given a path decrement the reference count to the dentry and the vfsmount.
  */
-void path_put(struct path *path)
+void path_put(const struct path *path)
 {
 	dput(path->dentry);
 	mntput(path->mnt);
