@@ -2,6 +2,7 @@
 #define _LINUX_NAMEI_H
 
 #include <linux/dcache.h>
+#include <linux/errno.h>
 #include <linux/linkage.h>
 #include <linux/path.h>
 
@@ -37,7 +38,7 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
  */
 #define LOOKUP_FOLLOW		0x0001
 #define LOOKUP_DIRECTORY	0x0002
-#define LOOKUP_AUTOMOUNT	0x0008
+#define LOOKUP_AUTOMOUNT	0x0004
 
 #define LOOKUP_PARENT		0x0010
 #define LOOKUP_REVAL		0x0020
@@ -99,6 +100,22 @@ static inline char *nd_get_link(struct nameidata *nd)
 static inline void nd_terminate_link(void *name, size_t len, size_t maxlen)
 {
 	((char *) name)[min(len, maxlen)] = '\0';
+}
+
+/**
+ * retry_estale - determine whether the caller should retry an operation
+ * @error: the error that would currently be returned
+ * @flags: flags being used for next lookup attempt
+ *
+ * Check to see if the error code was -ESTALE, and then determine whether
+ * to retry the call based on whether "flags" already has LOOKUP_REVAL set.
+ *
+ * Returns true if the caller should try the operation again.
+ */
+static inline bool
+retry_estale(const long error, const unsigned int flags)
+{
+	return error == -ESTALE && !(flags & LOOKUP_REVAL);
 }
 
 #endif /* _LINUX_NAMEI_H */
