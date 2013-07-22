@@ -546,9 +546,9 @@ int proc_setattr(struct dentry *dentry, struct iattr *attr)
 	if (error)
 		return error;
 
-    setattr_copy(inode, attr);
-    mark_inode_dirty(inode);
-    return 0;
+	setattr_copy(inode, attr);
+	mark_inode_dirty(inode);
+	return 0;
 }
 
 /*
@@ -753,16 +753,11 @@ static ssize_t mem_read(struct file *file, char __user *buf,
 	return mem_rw(file, buf, count, ppos, 0);
 }
 
-#define mem_write NULL
-
-#ifndef mem_write
-/* This is a security hazard */
 static ssize_t mem_write(struct file *file, const char __user *buf,
-			size_t count, loff_t *ppos)
+			 size_t count, loff_t *ppos)
 {
 	return mem_rw(file, (char __user*)buf, count, ppos, 1);
 }
-#endif
 
 loff_t mem_lseek(struct file *file, loff_t offset, int orig)
 {
@@ -1487,7 +1482,7 @@ static void *proc_pid_follow_link(struct dentry *dentry, struct nameidata *nd)
 	if (!proc_fd_access_allowed(inode))
 		goto out;
 
-	error = PROC_I(inode)->op.proc_get_link(dentry, &path);
+	error = PROC_I(inode)->op.proc_get_link(inode, &path);
 	if (error)
 		goto out;
 
